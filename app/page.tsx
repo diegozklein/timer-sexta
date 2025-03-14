@@ -1,101 +1,135 @@
-import Image from "next/image";
+"use client"
+
+import { useEffect, useState } from "react"
+import { cn } from "@/lib/utils"
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [timeRemaining, setTimeRemaining] = useState<string>("--:--:--")
+  const [isSextou, setIsSextou] = useState<boolean>(false)
+  const [showTimer, setShowTimer] = useState<boolean>(true)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    const calculateTimeRemaining = () => {
+      // Get current time in São Paulo timezone
+      const now = new Date()
+
+      // Format options for São Paulo timezone
+      const saoPauloFormatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+        hour12: false,
+      })
+
+      // Get current time in São Paulo
+      const saoPauloTimeStr = saoPauloFormatter.format(now)
+      const saoPauloTime = new Date(saoPauloTimeStr)
+
+      // Get current day of week in São Paulo (0 = Sunday, 5 = Friday)
+      const dayOfWeek = saoPauloTime.getDay()
+      const hours = saoPauloTime.getHours()
+      const minutes = saoPauloTime.getMinutes()
+      const seconds = saoPauloTime.getSeconds()
+
+      // Calculate the next Friday at 18:00
+      const fridayTarget = new Date(saoPauloTime)
+
+      // If today is not Friday or it's Friday but before 18:00
+      if (dayOfWeek !== 5 || (dayOfWeek === 5 && (hours < 18 || (hours === 18 && minutes === 0 && seconds === 0)))) {
+        // Set to next Friday
+        fridayTarget.setDate(fridayTarget.getDate() + ((5 - dayOfWeek + 7) % 7))
+        fridayTarget.setHours(18, 0, 0, 0)
+      }
+      // If it's Friday after 18:00, set to next Friday
+      else if (dayOfWeek === 5 && (hours > 18 || (hours === 18 && (minutes > 0 || seconds > 0)))) {
+        fridayTarget.setDate(fridayTarget.getDate() + 7)
+        fridayTarget.setHours(18, 0, 0, 0)
+      }
+
+      // Calculate difference in milliseconds
+      const diff = fridayTarget.getTime() - saoPauloTime.getTime()
+
+      // Check if it's "SEXTOU" time (Friday after 18:00 until Sunday midnight)
+      const isFridayAfter18 = dayOfWeek === 5 && (hours > 18 || (hours === 18 && (minutes > 0 || seconds > 0)))
+      const isSaturday = dayOfWeek === 6
+      const isSundayBeforeMidnight = dayOfWeek === 0 && hours < 0
+
+      const sextouTime = isFridayAfter18 || isSaturday || isSundayBeforeMidnight
+
+      setIsSextou(sextouTime)
+
+      if (sextouTime) {
+        // Gradually fade out the timer
+        if (showTimer) {
+          setTimeout(() => {
+            setShowTimer(false)
+          }, 1000)
+        }
+        return "--:--:--"
+      } else {
+        setShowTimer(true)
+
+        // Format the time remaining
+        const hours = Math.floor(diff / (1000 * 60 * 60))
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+        return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+      }
+    }
+
+    // Initial calculation
+    setTimeRemaining(calculateTimeRemaining())
+
+    // Update every second
+    const interval = setInterval(() => {
+      setTimeRemaining(calculateTimeRemaining())
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [showTimer])
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center bg-black text-white p-4">
+      <div className="text-center">
+        <h1
+          className={cn(
+            "text-2xl md:text-4xl font-light mb-8 transition-opacity duration-1000",
+            isSextou ? "opacity-0" : "opacity-100",
+          )}
+        >
+          Tempo restante para o "SEXTOU"
+        </h1>
+
+        <div className="relative h-32 flex items-center justify-center">
+          {showTimer && (
+            <div
+              className={cn(
+                "text-5xl md:text-8xl font-bold transition-opacity duration-1000",
+                isSextou ? "opacity-0" : "opacity-100",
+              )}
+            >
+              {timeRemaining}
+            </div>
+          )}
+
+          {isSextou && (
+            <div
+              className={cn(
+                "text-5xl md:text-8xl font-bold absolute inset-0 flex items-center justify-center transition-opacity duration-1000",
+                showTimer ? "opacity-0" : "opacity-100",
+              )}
+            >
+              SEXTOU
+            </div>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+      </div>
+    </main>
+  )
 }
+
