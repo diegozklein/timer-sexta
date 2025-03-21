@@ -56,7 +56,7 @@ export default function Home() {
       const diff = fridayTarget.getTime() - saoPauloTime.getTime()
 
       // Check if it's "SEXTOU" time (Friday after 18:00 until Sunday midnight)
-      const isFridayAfter18 = dayOfWeek === 5 && (hours > 18 || (hours === 18 && (minutes > 0 || seconds > 0)))
+      const isFridayAfter18 = dayOfWeek === 5 && (hours > 17 && minutes > 30 || (hours === 17 && (minutes > 30 || seconds > 0)))
       const isSaturday = dayOfWeek === 6
       const isSundayBeforeMidnight = dayOfWeek === 0 && hours < 0
 
