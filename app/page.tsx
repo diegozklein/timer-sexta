@@ -41,22 +41,22 @@ export default function Home() {
       const fridayTarget = new Date(saoPauloTime)
 
       // If today is not Friday or it's Friday but before 18:00
-      if (dayOfWeek !== 5 || (dayOfWeek === 5 && (hours < 17 && minutes < 30 || (hours === 17 && minutes === 30 && seconds === 0)))) {
+      if (dayOfWeek !== 5 || (dayOfWeek === 5 && (hours < 18 || (hours === 18 && minutes === 0 && seconds === 0)))) {
         // Set to next Friday
         fridayTarget.setDate(fridayTarget.getDate() + ((5 - dayOfWeek + 7) % 7))
-        fridayTarget.setHours(17, 30, 0, 0)
+        fridayTarget.setHours(18, 0, 0, 0)
       }
       // If it's Friday after 18:00, set to next Friday
-      else if (dayOfWeek === 5 && (hours > 17 && minutes > 30 || (hours === 17 && (minutes > 30 || seconds > 0)))) {
+      else if (dayOfWeek === 5 && (hours > 18 || (hours === 18 && (minutes > 0 || seconds > 0)))) {
         fridayTarget.setDate(fridayTarget.getDate() + 7)
-        fridayTarget.setHours(17, 30, 0, 0)
+        fridayTarget.setHours(18, 0, 0, 0)
       }
 
       // Calculate difference in milliseconds
       const diff = fridayTarget.getTime() - saoPauloTime.getTime()
 
       // Check if it's "SEXTOU" time (Friday after 18:00 until Sunday midnight)
-      const isFridayAfter18 = dayOfWeek === 5 && (hours > 17 && minutes > 30 || (hours === 17 && (minutes > 30 || seconds > 0)))
+      const isFridayAfter18 = dayOfWeek === 5 && (hours > 18 || (hours === 18 && (minutes > 0 || seconds > 0)))
       const isSaturday = dayOfWeek === 6
       const isSundayBeforeMidnight = dayOfWeek === 0 && hours < 0
 
