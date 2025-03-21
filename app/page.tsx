@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { cn } from "@/lib/utils"
+import { Fireworks } from "@/components/fireworks"
 
 export default function Home() {
   const [timeRemaining, setTimeRemaining] = useState<string>("--:--:--")
   const [isSextou, setIsSextou] = useState<boolean>(false)
   const [showTimer, setShowTimer] = useState<boolean>(true)
+  const [showFireworks, setShowFireworks] = useState<boolean>(false)
 
   useEffect(() => {
     const calculateTimeRemaining = () => {
@@ -60,6 +62,11 @@ export default function Home() {
 
       const sextouTime = isFridayAfter18 || isSaturday || isSundayBeforeMidnight
 
+      // If we just reached SEXTOU time, show fireworks
+      if (sextouTime && !isSextou) {
+        setShowFireworks(true)
+      }
+
       setIsSextou(sextouTime)
 
       if (sextouTime) {
@@ -72,11 +79,18 @@ export default function Home() {
         return "--:--:--"
       } else {
         setShowTimer(true)
+        setShowFireworks(false)
 
         // Format the time remaining
         const hours = Math.floor(diff / (1000 * 60 * 60))
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
         const seconds = Math.floor((diff % (1000 * 60)) / 1000)
+
+        // If we're very close to SEXTOU time (less than 5 seconds), prepare fireworks
+        if (hours === 0 && minutes === 0 && seconds <= 5) {
+          // Pre-load fireworks but don't show yet
+          setShowFireworks(false)
+        }
 
         return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
       }
@@ -91,11 +105,13 @@ export default function Home() {
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [showTimer])
+  }, [showTimer, isSextou])
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-black text-white p-4">
-      <div className="text-center">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-black text-white p-4 overflow-hidden">
+      {showFireworks && <Fireworks />}
+
+      <div className="text-center relative z-10">
         <h1
           className={cn(
             "text-2xl md:text-4xl font-light mb-8 transition-opacity duration-1000",
